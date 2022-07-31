@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash'
-import mongoose, { Model, QueryWithHelpers, Schema, Document } from 'mongoose'
-import { globby } from 'globby'
+import { Model, QueryWithHelpers, Schema, Document, Mongoose } from 'mongoose'
+import globby from 'globby'
 import path from 'path'
 import fs from 'fs'
 
@@ -22,7 +22,7 @@ export interface Migration {
 }
 
 const config = {
-  dir: path.resolve(process.cwd(), 'migrations'),
+  dir: path.resolve(__dirname, 'migrations'),
   typescript: false
 }
 
@@ -58,7 +58,7 @@ export interface MigrationModel<
   >
 }
 
-const VERSION_FILE_REGEX = /\/(\d{13})\.[tj]s/
+const VERSION_FILE_REGEX = /\/(\d{13})[a-z0-9_]*\.[tj]s/
 
 const isValidPath = path => VERSION_FILE_REGEX.test(path)
 
@@ -97,14 +97,14 @@ MigrationSchema.methods.getMigrationMapFromFileList = function (fileList) {
     console.log('No valid migrations found.')
   }
 
-  return filtered.reduce((acc, path) => {
-    const timestamp = getTimestampFromPath(path)
+  return filtered.reduce((acc, filePath) => {
+    const timestamp = getTimestampFromPath(filePath)
 
     if (this.hasRun(timestamp)) return acc
 
     return {
       ...acc,
-      [timestamp]: import(path),
+      [timestamp]: import(path.resolve('.', filePath)),
     }
   }, {})
 }
@@ -182,4 +182,4 @@ MigrationSchema.statics.migrate = async function (
   console.log('Migrations finished.')
 }
 
-export const MigrationsCollection = mongoose.model<Migration, MigrationModel>('migrations', MigrationSchema)
+export const getMigrationModel = (mongoose: Mongoose) => mongoose.model<Migration, MigrationModel>('migrations', MigrationSchema)

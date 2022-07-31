@@ -1,6 +1,6 @@
 {
   "name": "migoose",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "A migration toolkit for mongoose",
   "main": "lib/schema.js",
   "bin": "migoose",
@@ -13,7 +13,7 @@
     "clean": "rm -rf lib"
   },
   "dependencies": {
-    "globby": "^13.1.2",
+    "globby": "^11.0.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.5.0"
   },
