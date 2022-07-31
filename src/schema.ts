@@ -21,8 +21,12 @@ export interface Migration {
   lockedAt?: Date
 }
 
+const root = path.dirname(process.argv[1])
+
+const runtimeDir = path.resolve(root, 'migrations')
+
 const config = {
-  dir: path.resolve(__dirname, 'migrations'),
+  dir: runtimeDir,
   typescript: false
 }
 
@@ -172,7 +176,7 @@ MigrationSchema.statics.migrate = async function (
   let files
 
   if (isEmpty(dir)) {
-    files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
+    files = await globby(path.posix.join(runtimeDir, '*.{js,ts}'))
   } else {
     files = await globby(path.posix.join(...dir, '*.{js,ts}'))
   }
