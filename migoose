@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const { dirname, resolve } = require('path');
+
+const args = process.argv
+
+const contents = `
+module.exports = {
+  async up() {}
+}
+`;
+
+const dir = resolve(dirname(require.main.filename), 'migrations');
+
+if (!fs.existsSync(dir)){
+  fs.mkdirSync(dir);
+}
+
+const timestamp = Date.now()
+
+const name = `${timestamp}_${args[2] ?? 'unnamed'}.${args[3] ?? 'js'}`
+
+const filename = resolve(dir, name)
+
+fs.writeFileSync(filename, contents)
+
+console.log(`Migration created!`)
+console.log(filename)

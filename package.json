@@ -1,0 +1,25 @@
+{
+  "name": "migoose",
+  "version": "0.0.1",
+  "description": "A migration toolkit for mongoose",
+  "main": "lib/schema.js",
+  "bin": "migoose",
+  "author": "Leonardo Venturini",
+  "repository": "https://github.com/leonardoventurini/migoose",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "commander": "^9.4.0",
+    "globby": "^13.1.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.5.0",
+    "typescript": "^4.7.4"
+  },
+  "volta": {
+    "node": "16.16.0"
+  }
+}
