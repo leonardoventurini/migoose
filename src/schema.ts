@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash'
 import mongoose, { Model, QueryWithHelpers, Schema, Document } from 'mongoose'
 import { globby } from 'globby'
 import path from 'path'
+import fs from 'fs'
 
 type MigrationExecutor = {
   up?: () => Promise<void> | void
@@ -18,6 +19,18 @@ export interface Migration {
   version?: number
   isLocked?: boolean
   lockedAt?: Date
+}
+
+const config = {
+  dir: path.resolve(process.cwd(), 'migrations'),
+  typescript: false
+}
+
+const configPath = path.resolve(process.cwd(), '.migooserc.json')
+const configExists = fs.existsSync(configPath)
+
+if (configExists) {
+  Object.assign(config, require(configPath))
 }
 
 export interface MigrationMethods {
@@ -159,7 +172,7 @@ MigrationSchema.statics.migrate = async function (
   let files
 
   if (isEmpty(dir)) {
-    files = await globby(path.posix.join(path.resolve(path.dirname(require.main.filename), 'migrations'), '*.{js,ts}'))
+    files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
   } else {
     files = await globby(path.posix.join(...dir, '*.{js,ts}'))
   }
