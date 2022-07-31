@@ -1,17 +1,28 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const { dirname, resolve } = require('path');
+const { resolve } = require('path');
 
+const root = process.cwd()
 const args = process.argv
 
-const contents = `
-module.exports = {
+let config = {
+  dir: resolve(root, 'migrations'),
+  typescript: false
+}
+
+const contents = `module.exports = {
   async up() {}
 }
 `;
 
-const dir = resolve(dirname(require.main.filename), 'migrations');
+const configPath = resolve(root, '.migooserc.json')
+
+if (fs.existsSync(configPath)) {
+  config = Object.assign({}, config, require(configPath))
+}
+
+const { dir } = config
 
 if (!fs.existsSync(dir)){
   fs.mkdirSync(dir);
@@ -19,7 +30,7 @@ if (!fs.existsSync(dir)){
 
 const timestamp = Date.now()
 
-const name = `${timestamp}_${args[2] ?? 'unnamed'}.${args[3] ?? 'js'}`
+const name = `${timestamp}_${args[2] ?? 'unnamed'}.${config.typescript ? 'ts' : 'js'}`
 
 const filename = resolve(dir, name)
 
