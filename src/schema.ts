@@ -147,7 +147,7 @@ MigrationSchema.methods.run = async function (fileList) {
 }
 
 MigrationSchema.statics.getState = async function (_id: string = 'default') {
-  const state = await this.findOne({ _id })
+  const state = await this.findOne({ _id }).lean(false)
 
   if (!state) {
     await this.create({
@@ -155,7 +155,7 @@ MigrationSchema.statics.getState = async function (_id: string = 'default') {
       version: 0,
     })
 
-    return this.findOne({ _id })
+    return this.findOne({ _id }).lean(false)
   }
 
   return state
