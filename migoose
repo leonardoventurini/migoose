@@ -6,7 +6,7 @@ const { program } = require('commander')
 const { cosmiconfigSync } = require('cosmiconfig')
 const inquirer = require('inquirer')
 const { merge } = require('lodash')
-const { asyncRun } = require('./src/async-run')
+const { asyncRun } = require('./utils/async-run')
 
 const explorer = cosmiconfigSync('migoose')
 
@@ -43,7 +43,7 @@ asyncRun(async () => {
       })
 
       const contents = fs.readFileSync(
-        resolve(__dirname, config.es6 ? 'src/es6.js' : 'src/es5.js'),
+        resolve(__dirname, config.es6 ? 'utils/es6.js' : 'utils/es5.js'),
         'utf8',
       )
 
