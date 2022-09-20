@@ -1,40 +1,65 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const { resolve } = require('path');
+const fs = require('fs')
+const { resolve } = require('path')
+const { program } = require('commander')
+const { cosmiconfigSync } = require('cosmiconfig')
+const inquirer = require('inquirer')
+const { merge } = require('lodash')
+const { asyncRun } = require('./src/async-run')
 
-const root = process.cwd()
-const args = process.argv
+const explorer = cosmiconfigSync('migoose')
 
-let config = {
-  dir: resolve(root, 'migrations'),
-  typescript: false
+const cfg = explorer.search()
+
+let config = merge(
+  {
+    dir: resolve(process.cwd(), 'migrations'),
+    es6: false,
+    typescript: false,
+  },
+  cfg?.config,
+)
+
+if (!fs.existsSync(config.dir)) {
+  fs.mkdirSync(config.dir)
 }
 
-const contents = `module.exports = {
-  async up() {}
-}
-`;
+asyncRun(async () => {
+  program
+    .name('Migoose CLI')
+    .description('Mongoose Migration Toolkit')
+    .version('1.0.0')
 
-const configPath = resolve(root, '.migooserc.json')
+  program
+    .command('create')
+    .description('Creates a migration file')
+    .action(async () => {
+      const prompt = await inquirer.prompt({
+        name: 'name',
 
-if (fs.existsSync(configPath)) {
-  config = Object.assign({}, config, require(configPath))
-}
+        type: 'input',
+        message: `What is the name of the new migration?`,
+      })
 
-const { dir } = config
+      const contents = fs.readFileSync(
+        resolve(__dirname, config.es6 ? 'src/es6.js' : 'src/es5.js'),
+        'utf8',
+      )
 
-if (!fs.existsSync(dir)){
-  fs.mkdirSync(dir);
-}
+      const timestamp = Date.now()
 
-const timestamp = Date.now()
+      const name = `${timestamp}_${prompt.name}.${
+        config.typescript ? 'ts' : 'js'
+      }`
 
-const name = `${timestamp}_${args[2] ?? 'unnamed'}.${config.typescript ? 'ts' : 'js'}`
+      const filename = resolve(config.dir, name)
 
-const filename = resolve(dir, name)
+      fs.writeFileSync(filename, contents)
 
-fs.writeFileSync(filename, contents)
+      console.log(`Migration created!`)
+      console.log(filename)
+    })
 
-console.log(`Migration created!`)
-console.log(filename)
+  await program.parseAsync(process.argv)
+})

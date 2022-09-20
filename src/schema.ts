@@ -1,8 +1,8 @@
-import { isEmpty } from 'lodash'
-import { Model, QueryWithHelpers, Schema, Document, Mongoose } from 'mongoose'
+import { isEmpty, merge } from 'lodash'
+import { Document, Model, Mongoose, QueryWithHelpers, Schema } from 'mongoose'
 import globby from 'globby'
-import path from 'path'
-import fs from 'fs'
+import path, { resolve } from 'path'
+import { cosmiconfigSync } from 'cosmiconfig'
 
 type MigrationExecutor = {
   up?: () => Promise<void> | void
@@ -21,21 +21,18 @@ export interface Migration {
   lockedAt?: Date
 }
 
-const root = path.dirname(process.argv[1])
+const explorer = cosmiconfigSync('migoose')
 
-const runtimeDir = path.resolve(root, 'migrations')
+const cfg = explorer.search()
 
-const config = {
-  dir: runtimeDir,
-  typescript: false
-}
-
-const configPath = path.resolve(process.cwd(), '.migooserc.json')
-const configExists = fs.existsSync(configPath)
-
-if (configExists) {
-  Object.assign(config, require(configPath))
-}
+const config = merge(
+  {
+    dir: resolve(process.cwd(), 'migrations'),
+    es6: false,
+    typescript: false,
+  },
+  cfg?.config,
+)
 
 export interface MigrationMethods {
   hasRun(timestamp: string): boolean
@@ -49,7 +46,7 @@ export interface MigrationModel<
   TSchema = Migration,
   TQueryHelpers = any,
   TMethods = MigrationMethods,
-  > extends Model<TSchema, TQueryHelpers, TMethods> {
+> extends Model<TSchema, TQueryHelpers, TMethods> {
   migrate(namespace: string, ...dir: string[]): Promise<void>
 
   getState(
@@ -146,7 +143,7 @@ MigrationSchema.methods.run = async function (fileList) {
   await this.save()
 }
 
-MigrationSchema.statics.getState = async function (_id: string = 'default') {
+MigrationSchema.statics.getState = async function (_id = 'default') {
   const state = await this.findOne({ _id }).lean(false)
 
   if (!state) {
@@ -162,7 +159,7 @@ MigrationSchema.statics.getState = async function (_id: string = 'default') {
 }
 
 MigrationSchema.statics.migrate = async function (
-  namespace: string = 'default',
+  namespace = 'default',
   ...dir: string[]
 ) {
   const state = await this.getState(namespace)
@@ -176,7 +173,7 @@ MigrationSchema.statics.migrate = async function (
   let files
 
   if (isEmpty(dir)) {
-    files = await globby(path.posix.join(runtimeDir, '*.{js,ts}'))
+    files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
   } else {
     files = await globby(path.posix.join(...dir, '*.{js,ts}'))
   }
@@ -186,4 +183,5 @@ MigrationSchema.statics.migrate = async function (
   console.log('Migrations finished.')
 }
 
-export const getMigrationModel = (mongoose: Mongoose) => mongoose.model<Migration, MigrationModel>('migrations', MigrationSchema)
+export const getMigrationModel = (mongoose: Mongoose) =>
+  mongoose.model<Migration, MigrationModel>('migrations', MigrationSchema)
