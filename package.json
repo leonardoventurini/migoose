@@ -1,6 +1,6 @@
 {
   "name": "migoose",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A migration toolkit for mongoose",
   "main": "lib/schema.js",
   "bin": "migoose",
