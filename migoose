@@ -7,6 +7,7 @@ const { cosmiconfigSync } = require('cosmiconfig')
 const inquirer = require('inquirer')
 const { merge } = require('lodash')
 const { asyncRun } = require('./utils/async-run')
+const { validateConfig } = require("./utils/validate-config");
 
 const explorer = cosmiconfigSync('migoose')
 
@@ -20,6 +21,8 @@ let config = merge(
   },
   cfg?.config,
 )
+
+validateConfig(config)
 
 if (!fs.existsSync(config.dir)) {
   fs.mkdirSync(config.dir)

@@ -13,12 +13,14 @@
     "clean": "rm -rf lib"
   },
   "dependencies": {
+    "chalk": "4.1.2",
     "commander": "^9.4.0",
     "cosmiconfig": "^7.0.1",
     "globby": "^11.0.1",
     "inquirer": "^8.2.4",
     "lodash": "^4.17.21",
-    "mongoose": "^6.5.0"
+    "mongoose": "^6.5.0",
+    "yup": "^0.32.11"
   },
   "volta": {
     "node": "16.16.0"

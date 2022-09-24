@@ -3,6 +3,8 @@ import { Document, Model, Mongoose, QueryWithHelpers, Schema } from 'mongoose'
 import globby from 'globby'
 import path, { resolve } from 'path'
 import { cosmiconfigSync } from 'cosmiconfig'
+import { validateConfig } from '../utils/validate-config'
+import chalk from 'chalk'
 
 type MigrationExecutor = {
   up?: () => Promise<void> | void
@@ -11,7 +13,7 @@ type MigrationExecutor = {
 
 type MigrationModuleMap = Record<
   string,
-  Promise<{ default: MigrationExecutor }>
+  { migration: Promise<{ default: MigrationExecutor }>; name: string }
 >
 
 export interface Migration {
@@ -33,6 +35,8 @@ const config = merge(
   },
   cfg?.config,
 )
+
+validateConfig(config)
 
 export interface MigrationMethods {
   hasRun(timestamp: string): boolean
@@ -90,7 +94,9 @@ MigrationSchema.methods.hasRun = function (timestamp) {
   return Number(timestamp) <= this.version
 }
 
-MigrationSchema.methods.getMigrationMapFromFileList = function (fileList) {
+MigrationSchema.methods.getMigrationMapFromFileList = function (
+  fileList,
+): MigrationModuleMap {
   const filtered = fileList.filter(isValidPath).sort()
 
   if (isEmpty(filtered)) {
@@ -105,18 +111,22 @@ MigrationSchema.methods.getMigrationMapFromFileList = function (fileList) {
 
     return {
       ...acc,
-      [timestamp]: import(path.resolve('.', filePath)),
+      [timestamp]: {
+        migration: import(path.resolve('.', filePath)),
+        name: path.basename(filePath),
+      },
     }
   }, {})
 }
 
 MigrationSchema.methods.run = async function (fileList) {
-  const migrationMap = this.getMigrationMapFromFileList(fileList)
+  const migrationMap: MigrationModuleMap =
+    this.getMigrationMapFromFileList(fileList)
 
   const migrationMapEntries = Object.entries(migrationMap)
 
   if (isEmpty(migrationMapEntries)) {
-    console.log('Migrations already up-to-date.')
+    console.log(chalk.gray('Migrations already up-to-date.'))
     return
   }
 
@@ -124,12 +134,14 @@ MigrationSchema.methods.run = async function (fileList) {
 
   await this.save()
 
-  for (const [timestamp, migration] of migrationMapEntries) {
+  for (const [timestamp, { migration, name }] of migrationMapEntries) {
+    console.log(chalk.gray(`Running migration "${name}"...`))
+
     // @ts-ignore
     const { default: migrationObject } = await migration
 
     if (!migrationObject.up) {
-      throw new Error(`No up() method found for ${timestamp}.`)
+      throw new Error(`No up() method found for "${name}".`)
     }
 
     await migrationObject.up()
@@ -158,29 +170,26 @@ MigrationSchema.statics.getState = async function (_id = 'default') {
   return state
 }
 
-MigrationSchema.statics.migrate = async function (
-  namespace = 'default',
-  ...dir: string[]
-) {
+MigrationSchema.statics.migrate = async function (namespace = 'default') {
   const state = await this.getState(namespace)
 
   if (state?.isLocked) {
-    return console.log('Migrations are locked.')
+    return console.error(chalk.red('Migrations are locked.'))
   }
 
-  console.log('Migrations running...')
+  console.log(chalk.yellow('Migrations running...'))
+  console.log(chalk.gray(`Environment: ${process.env.NODE_ENV}`))
 
-  let files
+  const migrationPath =
+    process.env.NODE_ENV === 'production'
+      ? config.dir.production
+      : config.dir.development
 
-  if (isEmpty(dir)) {
-    files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
-  } else {
-    files = await globby(path.posix.join(...dir, '*.{js,ts}'))
-  }
+  const files = await globby(path.posix.join(migrationPath, '*.{js,ts}'))
 
   await state?.run(files)
 
-  console.log('Migrations finished.')
+  console.log(chalk.green('Migrations finished.'))
 }
 
 export const getMigrationModel = (mongoose: Mongoose) =>
