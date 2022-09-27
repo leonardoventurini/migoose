@@ -24,8 +24,10 @@ let config = merge(
 
 validateConfig(config)
 
-if (!fs.existsSync(config.dir)) {
-  fs.mkdirSync(config.dir)
+const migrationPath = config.dir.development
+
+if (!fs.existsSync(migrationPath)) {
+  fs.mkdirSync(migrationPath)
 }
 
 asyncRun(async () => {
@@ -56,7 +58,7 @@ asyncRun(async () => {
         config.typescript ? 'ts' : 'js'
       }`
 
-      const filename = resolve(config.dir, name)
+      const filename = resolve(migrationPath, name)
 
       fs.writeFileSync(filename, contents)
 
