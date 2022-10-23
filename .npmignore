@@ -1,9 +1,10 @@
 .idea
-docs
 node_modules
 src
 yarn-error.log
 .prettierrc.js
 .eslintrc.js
-.mocharc.yaml
-test
+.mocharc.yml
+tests
+.github
+**/*.md

@@ -1,0 +1,5 @@
+{
+  "dir": "tests/migrations",
+  "typescript": false,
+  "es6": true
+}

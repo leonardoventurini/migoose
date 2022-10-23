@@ -3,26 +3,11 @@
 const fs = require('fs')
 const { resolve } = require('path')
 const { program } = require('commander')
-const { cosmiconfigSync } = require('cosmiconfig')
 const inquirer = require('inquirer')
-const { merge } = require('lodash')
-const { asyncRun } = require('./utils/async-run')
-const { validateConfig } = require("./utils/validate-config");
+const { asyncRun } = require('./dist/utils/async-run')
+const { loadConfig } = require('./dist/utils/load-config')
 
-const explorer = cosmiconfigSync('migoose')
-
-const cfg = explorer.search()
-
-let config = merge(
-  {
-    dir: resolve(process.cwd(), 'migrations'),
-    es6: false,
-    typescript: false,
-  },
-  cfg?.config,
-)
-
-validateConfig(config)
+const config = loadConfig()
 
 const migrationPath = config.dir.development
 

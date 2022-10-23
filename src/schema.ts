@@ -1,9 +1,8 @@
-import { isEmpty, merge } from 'lodash'
+import { isEmpty } from 'lodash'
 import { Document, Model, Mongoose, QueryWithHelpers, Schema } from 'mongoose'
 import globby from 'globby'
-import path, { resolve } from 'path'
-import { cosmiconfigSync } from 'cosmiconfig'
-import { validateConfig } from '../utils/validate-config'
+import path from 'path'
+import { loadConfig } from './utils/load-config'
 import chalk from 'chalk'
 
 type MigrationExecutor = {
@@ -23,20 +22,9 @@ export interface Migration {
   lockedAt?: Date
 }
 
-const explorer = cosmiconfigSync('migoose')
+export const MigrationList = new Map()
 
-const cfg = explorer.search()
-
-const config = merge(
-  {
-    dir: resolve(process.cwd(), 'migrations'),
-    es6: false,
-    typescript: false,
-  },
-  cfg?.config,
-)
-
-validateConfig(config)
+const config = loadConfig()
 
 export interface MigrationMethods {
   hasRun(timestamp: string): boolean
@@ -178,7 +166,6 @@ MigrationSchema.statics.migrate = async function (namespace = 'default') {
   }
 
   console.log(chalk.yellow('Migrations running...'))
-  console.log(chalk.gray(`Environment: ${process.env.NODE_ENV}`))
 
   const migrationPath =
     process.env.NODE_ENV === 'production'

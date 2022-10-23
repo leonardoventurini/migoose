@@ -1,0 +1,9 @@
+require:
+  - 'tests/babel-register.js'
+watch: true
+file:
+  - 'tests/setup.js'
+extension: [ 'js', 'cjs', 'mjs', 'ts', 'jsx', 'tsx' ]
+watch-files: [ 'src/**/*', 'tests/**/*' ]
+watch-ignore: [ 'node_modules', 'tests/migrations' ]
+timeout: 10000
