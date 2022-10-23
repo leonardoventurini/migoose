@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { loadConfig } from './utils/load-config'
 import globby from 'globby'
+import { existsSync, mkdirSync } from 'fs'
 
 export const ES5Template = `
 const { Migoose } = require('migoose')
@@ -60,6 +61,10 @@ export const Migoose = {
   },
 
   async createFile(description: string) {
+    if (!existsSync(config.dir)) {
+      mkdirSync(config.dir)
+    }
+
     let contents = config.es6 ? ES6Template : ES5Template
 
     const timestamp = Date.now()
