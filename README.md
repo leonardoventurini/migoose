@@ -41,3 +41,16 @@ You can configure `migoose` by creating a `.migooserc` file in the root of your 
 ```
 
 You don't need to specify a database connection since it will use `mongoose`'s connection.
+
+## Running Migrations
+
+Please note that for simplicity there is no "down" migration, so if you need to revert a migration you will need add
+another one undoing stuff.
+
+```js
+import mongoose from 'mongoose';
+import { Migoose } from 'migoose';
+
+await import('./migrations')
+await Migoose.migrate(mongoose) // It needs your Mongoose instance.
+```
