@@ -10,6 +10,7 @@ export const loadConfig = () => {
 
   const config = merge(
     {
+      collectionName: 'migrations',
       dir: resolve(process.cwd(), 'migrations'),
       es6: false,
       typescript: false,
@@ -18,6 +19,7 @@ export const loadConfig = () => {
   )
 
   object({
+    collectionName: string().required(),
     dir: string().required(),
     es6: boolean(),
     typescript: boolean(),

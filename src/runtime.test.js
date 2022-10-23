@@ -2,14 +2,12 @@ import { Migoose } from './index'
 import { expect } from 'chai'
 import { deleteFiles } from '../tests/delete-files'
 import sinon from 'sinon'
-import mongoose from 'mongoose'
-import { getMigrationModel } from './schema'
 
 describe('Migoose Runtime', () => {
-  const MigrationCollection = getMigrationModel(mongoose)
-
   beforeEach(async () => {
     await deleteFiles()
+
+    Migoose.reset()
 
     await Migoose.createFile('hello world 1')
 
@@ -22,11 +20,11 @@ describe('Migoose Runtime', () => {
     await Migoose.createFile('hello world 3')
 
     await Migoose.generateIndex()
+
+    delete require.cache[require.resolve('../tests/migrations')]
   })
 
   it('it should load all migrations into memory', async () => {
-    delete require.cache[require.resolve('../tests/migrations')]
-
     await import('../tests/migrations')
 
     expect(Migoose.migrationList).to.have.length(3)
@@ -39,11 +37,13 @@ describe('Migoose Runtime', () => {
   })
 
   it('should run all migrations', async () => {
+    await import('../tests/migrations')
+
     Migoose.migrationList.forEach(migration => {
       sinon.stub(migration, 'fn').resolves()
     })
 
-    await MigrationCollection.migrate('test')
+    await Migoose.migrate()
 
     Migoose.migrationList.forEach(migration => {
       expect(migration.fn).to.have.been.called
@@ -65,12 +65,72 @@ describe('Migoose Runtime', () => {
       })
     })
 
-    await MigrationCollection.migrate('test')
+    await Migoose.migrate()
 
     expect(order).to.deep.equal([
       'hello world 1',
       'hello world 2',
       'hello world 3',
     ])
+  })
+
+  it('should not run them twice', async () => {
+    await import('../tests/migrations')
+
+    const cachedMigrations = Array.from(Migoose.migrationList.values())
+
+    Migoose.migrationList.forEach(migration => {
+      sinon.stub(migration, 'fn').resolves()
+    })
+
+    await Migoose.migrate()
+
+    Migoose.migrationList.forEach(migration => {
+      expect(migration.fn).to.have.been.called
+    })
+
+    await Migoose.createFile('hello world 4')
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    await Migoose.createFile('hello world 5')
+
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    await Migoose.createFile('hello world 6')
+
+    await Migoose.generateIndex()
+
+    delete require.cache[require.resolve('../tests/migrations')]
+
+    await import('../tests/migrations')
+
+    const state = await Migoose.model.getState()
+
+    const freshMigrations = await state.getFreshMigrations()
+
+    expect(freshMigrations).to.have.length(3)
+
+    expect(Migoose.migrationList).to.have.length(6)
+
+    const oldMigrations = Array.from(Migoose.migrationList.values()).filter(
+      ({ timestamp }) => !freshMigrations.includes(timestamp),
+    )
+
+    expect(oldMigrations).to.be.deep.equal(cachedMigrations)
+
+    const newMigrations = Array.from(Migoose.migrationList.values()).filter(
+      ({ timestamp }) => freshMigrations.includes(timestamp),
+    )
+
+    newMigrations.forEach(migration => {
+      sinon.stub(migration, 'fn').resolves()
+    })
+
+    await Migoose.migrate()
+
+    Migoose.migrationList.forEach(migration => {
+      expect(migration.fn).to.have.been.calledOnce
+    })
   })
 })

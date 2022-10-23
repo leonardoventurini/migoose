@@ -3,6 +3,9 @@ import path from 'path'
 import { loadConfig } from './utils/load-config'
 import globby from 'globby'
 import { existsSync, mkdirSync } from 'fs'
+import mongoose from 'mongoose'
+import { Migration, MigrationModel, MigrationSchema } from '@/schema'
+import chalk from 'chalk'
 
 export const ES5Template = `
 const { Migoose } = require('migoose')
@@ -31,8 +34,15 @@ const config = loadConfig()
 export const Migoose = {
   migrationList: new Map(),
 
+  get model() {
+    return mongoose.model<Migration, MigrationModel>(
+      config.collectionName,
+      MigrationSchema,
+    )
+  },
+
   addMigration(timestamp: number, description: string, fn: CallableFunction) {
-    this.migrationList.set(timestamp, { description, fn })
+    this.migrationList.set(timestamp, { timestamp, description, fn })
   },
 
   async getFiles() {
@@ -81,5 +91,23 @@ export const Migoose = {
     const filename = path.resolve(config.dir, name)
 
     await fs.writeFile(filename, contents.trimStart())
+  },
+
+  async migrate(namespace = 'default') {
+    const state = await this.model.getState(namespace)
+
+    if (state?.isLocked) {
+      return console.error(chalk.red('Migrations are locked.'))
+    }
+
+    console.log(chalk.yellow('Migrations running...'))
+
+    await state.run()
+
+    console.log(chalk.green('Migrations finished.'))
+  },
+
+  reset() {
+    this.migrationList.clear()
   },
 }

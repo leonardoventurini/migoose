@@ -56,11 +56,11 @@ after(async () => {
   // noinspection JSConstantReassignment
   mongoose.models = {}
 
-  await Promise.all(
-    Object.values(mongoose.connection.collections).map(async collection => {
-      await collection.dropIndexes()
-    }),
-  )
+  // await Promise.all(
+  //   Object.values(mongoose.connection.collections).map(async collection => {
+  //     await collection.dropIndexes()
+  //   }),
+  // )
 
   await mongoose.disconnect()
   await mongo.stop()
