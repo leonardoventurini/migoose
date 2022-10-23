@@ -1,3 +1,5 @@
+![tests](https://github.com/leonardoventurini/migoose/actions/workflows/tests.yml/badge.svg)
+
 ## Migoose
 
 After working many years with `mongoose`, I faced a problem, I needed to run migrations in an app which was bundled
