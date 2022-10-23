@@ -69,9 +69,10 @@ export const Migoose = {
 
     const timestamp = Date.now()
 
-    const name = `${timestamp}_${description.replace(/ /g, '_')}.${
-      config.typescript ? 'ts' : 'js'
-    }`
+    const name = `${timestamp}_${description
+      .trim()
+      .replace(/ /g, '_')
+      .toLowerCase()}.${config.typescript ? 'ts' : 'js'}`
 
     contents = contents
       .replace('{{timestamp}}', timestamp.toString())
