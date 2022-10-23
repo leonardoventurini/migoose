@@ -8,8 +8,8 @@
   "repository": "https://github.com/leonardoventurini/migoose",
   "license": "MIT",
   "scripts": {
-    "build": "babel --ignore '**/*.test.*' --verbose --extensions '.js,.ts' --out-dir dist src",
-    "watch": "babel --ignore '**/*.test.*' --verbose --extensions '.js,.ts' --out-dir dist src --watch",
+    "build": "babel --ignore '**/*.test.js' --verbose --extensions '.js,.ts' --out-dir dist src",
+    "watch": "babel --ignore '**/*.test.js' --verbose --extensions '.js,.ts' --out-dir dist src --watch",
     "clean": "rm -rf lib",
     "test": "NODE_ENV=test mocha 'src/**/*.test.*' --watch=false --exit",
     "test:watch": "NODE_ENV=test mocha 'src/**/*.test.*' --watch=true"

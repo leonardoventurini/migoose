@@ -49,4 +49,28 @@ describe('Migoose Runtime', () => {
       expect(migration.fn).to.have.been.called
     })
   })
+
+  it('should run all migrations in order', async () => {
+    Migoose.migrationList.clear()
+
+    delete require.cache[require.resolve('../tests/migrations')]
+
+    await import('../tests/migrations')
+
+    const order = []
+
+    Migoose.migrationList.forEach(migration => {
+      sinon.stub(migration, 'fn').callsFake(() => {
+        order.push(migration.description)
+      })
+    })
+
+    await MigrationCollection.migrate('test')
+
+    expect(order).to.deep.equal([
+      'hello world 1',
+      'hello world 2',
+      'hello world 3',
+    ])
+  })
 })
