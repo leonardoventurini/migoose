@@ -1,11 +1,13 @@
 import mongoose from 'mongoose'
 import { after, before } from 'mocha'
 import { MongoMemoryServer } from 'mongodb-memory-server'
-import globby from 'globby'
-import path from 'path'
-import fs from 'fs/promises'
+import { deleteFiles } from './delete-files'
+import chai from 'chai'
+import sinonChai from 'sinon-chai'
 
 let mongo = null
+
+chai.use(sinonChai)
 
 const connect = async () => {
   if (mongo) return
@@ -35,12 +37,7 @@ const clearDatabase = async () => {
 before(async () => {
   await connect()
 
-  // Clean All Migrations
-  const files = await globby(path.posix.join('tests/migrations', '*.{js,ts}'))
-
-  for (const file of files) {
-    await fs.unlink(file)
-  }
+  await deleteFiles()
 })
 
 beforeEach(async () => {

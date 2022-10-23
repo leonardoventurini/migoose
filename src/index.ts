@@ -9,9 +9,7 @@ const { Migoose } = require('migoose')
 Migoose.addMigration(
   {{timestamp}},
   '{{description}}',
-  {
-    async up() {},
-  }
+  async function() {}
 )
 `
 
@@ -21,9 +19,7 @@ import { Migoose } from 'migoose'
 Migoose.addMigration(
   {{timestamp}},
   '{{description}}',
-  {
-    async up() {},
-  }
+  async function() {}
 )
 `
 
