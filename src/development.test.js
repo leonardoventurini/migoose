@@ -2,7 +2,7 @@ import { Migoose } from './index'
 import { expect } from 'chai'
 import fs from 'fs/promises'
 
-describe('Migoose', () => {
+describe('Migoose Development', () => {
   before(async () => {
     await Migoose.createFile('hello world')
   })

@@ -22,8 +22,6 @@ export interface Migration {
   lockedAt?: Date
 }
 
-export const MigrationList = new Map()
-
 const config = loadConfig()
 
 export interface MigrationMethods {

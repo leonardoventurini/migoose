@@ -1,4 +1,3 @@
-import { MigrationList } from './schema'
 import fs from 'fs/promises'
 import path from 'path'
 import { loadConfig } from './utils/load-config'
@@ -33,8 +32,10 @@ export const ImportTemplate = `import './{{filename}}'`
 const config = loadConfig()
 
 export const Migoose = {
+  migrationList: new Map(),
+
   addMigration(timestamp: number, description: string, fn: CallableFunction) {
-    MigrationList.set(timestamp, { description, fn })
+    this.migrationList.set(timestamp, { description, fn })
   },
 
   async getFiles() {

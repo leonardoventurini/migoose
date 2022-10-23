@@ -9,10 +9,8 @@ const { loadConfig } = require('./dist/utils/load-config')
 
 const config = loadConfig()
 
-const migrationPath = config.dir.development
-
-if (!fs.existsSync(migrationPath)) {
-  fs.mkdirSync(migrationPath)
+if (!fs.existsSync(config.dir)) {
+  fs.mkdirSync(config.dir)
 }
 
 asyncRun(async () => {
@@ -43,7 +41,7 @@ asyncRun(async () => {
         config.typescript ? 'ts' : 'js'
       }`
 
-      const filename = resolve(migrationPath, name)
+      const filename = resolve(config.dir, name)
 
       fs.writeFileSync(filename, contents)
 
