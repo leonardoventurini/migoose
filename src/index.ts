@@ -3,7 +3,7 @@ import path from 'path'
 import { loadConfig } from './utils/load-config'
 import globby from 'globby'
 import { existsSync, mkdirSync } from 'fs'
-import mongoose from 'mongoose'
+import { Mongoose } from 'mongoose'
 import { Migration, MigrationModel, MigrationSchema } from '@/schema'
 import chalk from 'chalk'
 
@@ -34,7 +34,7 @@ const config = loadConfig()
 export const Migoose = {
   migrationList: new Map(),
 
-  get model() {
+  model(mongoose: Mongoose) {
     return mongoose.model<Migration, MigrationModel>(
       config.collectionName,
       MigrationSchema,
@@ -48,7 +48,7 @@ export const Migoose = {
   async getFiles() {
     const files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
 
-    return files.filter(f => f !== 'index.js' && f !== 'index.ts')
+    return files.filter(f => !f.endsWith('index.js') && !f.endsWith('index.ts'))
   },
 
   async generateIndex() {
@@ -90,11 +90,15 @@ export const Migoose = {
 
     const filename = path.resolve(config.dir, name)
 
+    console.log(chalk.gray(`Creating migration file "${filename}"...`))
+
     await fs.writeFile(filename, contents.trimStart())
+
+    await this.generateIndex()
   },
 
-  async migrate(namespace = 'default') {
-    const state = await this.model.getState(namespace)
+  async migrate(mongoose: Mongoose, namespace = 'default') {
+    const state = await this.model(mongoose).getState(namespace)
 
     if (state?.isLocked) {
       return console.error(chalk.red('Migrations are locked.'))

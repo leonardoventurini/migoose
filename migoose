@@ -6,6 +6,7 @@ const { program } = require('commander')
 const inquirer = require('inquirer')
 const { asyncRun } = require('./dist/utils/async-run')
 const { loadConfig } = require('./dist/utils/load-config')
+const { Migoose } = require('./dist')
 
 const config = loadConfig()
 
@@ -30,23 +31,9 @@ asyncRun(async () => {
         message: `What is the name of the new migration?`,
       })
 
-      const contents = fs.readFileSync(
-        resolve(__dirname, config.es6 ? 'utils/es6.js' : 'utils/es5.js'),
-        'utf8',
-      )
-
-      const timestamp = Date.now()
-
-      const name = `${timestamp}_${prompt.name}.${
-        config.typescript ? 'ts' : 'js'
-      }`
-
-      const filename = resolve(config.dir, name)
-
-      fs.writeFileSync(filename, contents)
+      await Migoose.createFile(prompt.name)
 
       console.log(`Migration created!`)
-      console.log(filename)
     })
 
   await program.parseAsync(process.argv)

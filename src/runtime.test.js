@@ -2,6 +2,7 @@ import { Migoose } from './index'
 import { expect } from 'chai'
 import { deleteFiles } from '../tests/delete-files'
 import sinon from 'sinon'
+import mongoose from 'mongoose'
 
 describe('Migoose Runtime', () => {
   beforeEach(async () => {
@@ -43,7 +44,7 @@ describe('Migoose Runtime', () => {
       sinon.stub(migration, 'fn').resolves()
     })
 
-    await Migoose.migrate()
+    await Migoose.migrate(mongoose)
 
     Migoose.migrationList.forEach(migration => {
       expect(migration.fn).to.have.been.called
@@ -65,7 +66,7 @@ describe('Migoose Runtime', () => {
       })
     })
 
-    await Migoose.migrate()
+    await Migoose.migrate(mongoose)
 
     expect(order).to.deep.equal([
       'hello world 1',
@@ -83,7 +84,7 @@ describe('Migoose Runtime', () => {
       sinon.stub(migration, 'fn').resolves()
     })
 
-    await Migoose.migrate()
+    await Migoose.migrate(mongoose)
 
     Migoose.migrationList.forEach(migration => {
       expect(migration.fn).to.have.been.called
@@ -105,7 +106,7 @@ describe('Migoose Runtime', () => {
 
     await import('../tests/migrations')
 
-    const state = await Migoose.model.getState()
+    const state = await Migoose.model(mongoose).getState()
 
     const freshMigrations = await state.getFreshMigrations()
 
@@ -127,7 +128,7 @@ describe('Migoose Runtime', () => {
       sinon.stub(migration, 'fn').resolves()
     })
 
-    await Migoose.migrate()
+    await Migoose.migrate(mongoose)
 
     Migoose.migrationList.forEach(migration => {
       expect(migration.fn).to.have.been.calledOnce
