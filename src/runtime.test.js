@@ -1,8 +1,13 @@
 import { Migoose } from './index'
 import { expect } from 'chai'
 import { deleteFiles } from '../tests/delete-files'
+import sinon from 'sinon'
+import mongoose from 'mongoose'
+import { getMigrationModel } from './schema'
 
 describe('Migoose Runtime', () => {
+  const MigrationCollection = getMigrationModel(mongoose)
+
   beforeEach(async () => {
     await deleteFiles()
 
@@ -31,5 +36,17 @@ describe('Migoose Runtime', () => {
       expect(migration).to.have.property('fn').which.is.a('function')
       expect(timestamp).to.be.a('number')
     }
+  })
+
+  it('should run all migrations', async () => {
+    Migoose.migrationList.forEach(migration => {
+      sinon.stub(migration, 'fn').resolves()
+    })
+
+    await MigrationCollection.migrate('test')
+
+    Migoose.migrationList.forEach(migration => {
+      expect(migration.fn).to.have.been.called
+    })
   })
 })

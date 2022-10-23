@@ -15,7 +15,7 @@ const connect = async () => {
   // mongoose.set('debug', false)
 
   mongo = await MongoMemoryServer.create({
-    replSet: { dbName: 'sapienza-test' },
+    replSet: { dbName: 'sapienza-test', port: 30000 },
   })
 
   const uri = mongo.getUri()

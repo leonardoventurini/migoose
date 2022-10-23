@@ -1,19 +1,7 @@
 import { isEmpty } from 'lodash'
 import { Document, Model, Mongoose, QueryWithHelpers, Schema } from 'mongoose'
-import globby from 'globby'
-import path from 'path'
-import { loadConfig } from './utils/load-config'
 import chalk from 'chalk'
-
-type MigrationExecutor = {
-  up?: () => Promise<void> | void
-  down?: () => Promise<void> | void
-}
-
-type MigrationModuleMap = Record<
-  string,
-  { migration: Promise<{ default: MigrationExecutor }>; name: string }
->
+import { Migoose } from '@/index'
 
 export interface Migration {
   _id?: string
@@ -22,12 +10,8 @@ export interface Migration {
   lockedAt?: Date
 }
 
-const config = loadConfig()
-
 export interface MigrationMethods {
   hasRun(timestamp: string): boolean
-
-  getMigrationMapFromFileList(fileList: string[]): MigrationModuleMap
 
   run(fileList: string[]): void
 }
@@ -48,12 +32,6 @@ export interface MigrationModel<
     TSchema
   >
 }
-
-const VERSION_FILE_REGEX = /\/(\d{13})[a-z0-9_]*\.[tj]s/
-
-const isValidPath = path => VERSION_FILE_REGEX.test(path)
-
-const getTimestampFromPath = path => path.match(VERSION_FILE_REGEX)?.[1]
 
 export const MigrationSchema = new Schema<
   Migration,
@@ -80,38 +58,12 @@ MigrationSchema.methods.hasRun = function (timestamp) {
   return Number(timestamp) <= this.version
 }
 
-MigrationSchema.methods.getMigrationMapFromFileList = function (
-  fileList,
-): MigrationModuleMap {
-  const filtered = fileList.filter(isValidPath).sort()
-
-  if (isEmpty(filtered)) {
-    // eslint-disable-next-line no-console
-    console.log('No valid migrations found.')
-  }
-
-  return filtered.reduce((acc, filePath) => {
-    const timestamp = getTimestampFromPath(filePath)
-
-    if (this.hasRun(timestamp)) return acc
-
-    return {
-      ...acc,
-      [timestamp]: {
-        migration: import(path.resolve('.', filePath)),
-        name: path.basename(filePath),
-      },
-    }
-  }, {})
-}
-
 MigrationSchema.methods.run = async function (fileList) {
-  const migrationMap: MigrationModuleMap =
-    this.getMigrationMapFromFileList(fileList)
+  const sortedKeys = Array.from(Migoose.migrationList.keys())
+    .sort((a, b) => a - b)
+    .filter(key => !this.hasRun(key))
 
-  const migrationMapEntries = Object.entries(migrationMap)
-
-  if (isEmpty(migrationMapEntries)) {
+  if (isEmpty(sortedKeys)) {
     console.log(chalk.gray('Migrations already up-to-date.'))
     return
   }
@@ -120,17 +72,16 @@ MigrationSchema.methods.run = async function (fileList) {
 
   await this.save()
 
-  for (const [timestamp, { migration, name }] of migrationMapEntries) {
-    console.log(chalk.gray(`Running migration "${name}"...`))
+  for (const timestamp of sortedKeys) {
+    const migration = Migoose.migrationList.get(timestamp)
 
-    // @ts-ignore
-    const { default: migrationObject } = await migration
+    console.log(chalk.gray(`Running migration "${migration.description}"...`))
 
-    if (!migrationObject.up) {
-      throw new Error(`No up() method found for "${name}".`)
+    if (!migration.fn) {
+      throw new Error(`No up() method found for "${migration.description}".`)
     }
 
-    await migrationObject.up()
+    await migration.fn()
 
     this.version = Number(timestamp)
 
@@ -165,14 +116,7 @@ MigrationSchema.statics.migrate = async function (namespace = 'default') {
 
   console.log(chalk.yellow('Migrations running...'))
 
-  const migrationPath =
-    process.env.NODE_ENV === 'production'
-      ? config.dir.production
-      : config.dir.development
-
-  const files = await globby(path.posix.join(migrationPath, '*.{js,ts}'))
-
-  await state?.run(files)
+  await state.run()
 
   console.log(chalk.green('Migrations finished.'))
 }
