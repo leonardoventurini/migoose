@@ -48,11 +48,14 @@ export const Migoose = {
   async getFiles() {
     const files = await globby(path.posix.join(config.dir, '*.{js,ts}'))
 
-    return files.filter(f => !f.endsWith('index.js') && !f.endsWith('index.ts'))
+    return files.filter(
+      f => !f.endsWith('/index.js') && !f.endsWith('/index.ts'),
+    )
   },
 
   async generateIndex() {
     const files = await this.getFiles()
+
     const imports = files
       .map(f =>
         ImportTemplate.replace(
