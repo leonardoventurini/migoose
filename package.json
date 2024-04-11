@@ -1,6 +1,6 @@
 {
   "name": "migoose",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A migration toolkit for mongoose",
   "main": "dist/index.js",
   "bin": "migoose",
