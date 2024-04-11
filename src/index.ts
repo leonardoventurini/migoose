@@ -57,12 +57,12 @@ export const Migoose = {
     const files = await this.getFiles()
 
     const imports = files
-      .map(f =>
-        ImportTemplate.replace(
+      .map(f => {
+        return ImportTemplate.replace(
           '{{filename}}',
-          path.basename(f, config.typescript ? '.ts' : '.js'),
-        ),
-      )
+          path.basename(f).split('.')[0],
+        )
+      })
       .join('\n')
 
     const index = `${imports}\n`
